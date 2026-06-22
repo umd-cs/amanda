@@ -182,6 +182,16 @@
     %define rpm_group Productivity/Archiving/Backup
 %endif
 
+# fileutils and xinetd are absent on RHEL 10+: fileutils merged into coreutils,
+# xinetd replaced by systemd socket activation.
+%define requires_fileutils Requires: fileutils
+%define requires_xinetd Requires: xinetd
+%if "%{dist}" == "redhat" && %{distver} >= 10
+    %undefine requires_initscripts
+    %undefine requires_fileutils
+    %undefine requires_xinetd
+%endif
+
 # Let's die if we haven't detected the distro. This might save some frustration.
 # RPM does not provide a way to  exit gracefully, hence the tag_to_cause_exit. 
 %{!?distver: %{error:"Your distribution and its version were not detected."}; %tag_to_cause_exit }
@@ -245,13 +255,13 @@ Requires: /sbin/ldconfig
 Requires: /bin/sh
 Requires: /usr/sbin/useradd
 Requires: /usr/sbin/usermod
-Requires: fileutils
+%{?requires_fileutils}
 Requires: gettext
 Requires: grep
 Requires: gnuplot
 Requires: %{curl} >= 7.10.0
 Requires: openssl
-Requires: xinetd
+%{?requires_xinetd}
 Requires: perl >= 5.6.0
 Requires: tar >= %{tarver}
 Requires: readline
@@ -262,11 +272,11 @@ Requires: readline
 Summary: The Amanda Backup and Archiving Client
 Group: %{rpm_group}
 Requires: /bin/awk
-Requires: fileutils
+%{?requires_fileutils}
 Requires: grep
 %{?requires_libtermcap}
 %{?requires_initscripts}
-Requires: xinetd
+%{?requires_xinetd}
 Requires: perl >= 5.6.0
 Requires: tar >= %{tarver}
 Requires: readline
@@ -281,11 +291,11 @@ Obsoletes: amanda, amanda-client, amanda-server
 Summary: The Amanda Backup and Archiving Server
 Group: %{rpm_group}
 Requires: /bin/awk
-Requires: fileutils
+%{?requires_fileutils}
 Requires: grep
 %{?requires_libtermcap}
 %{?requires_initscripts}
-Requires: xinetd
+%{?requires_xinetd}
 Requires: perl >= 5.6.0
 Requires: tar >= %{tarver}
 Provides: amanda-backup_server = %{amanda_version}
