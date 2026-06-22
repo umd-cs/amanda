@@ -36,13 +36,13 @@
 
 # Define which Distribution we are building:
 # Try to detect the distribution we are building:
-%if %{_vendor} == amazon
+%if "%{_vendor}" == "amazon"
     %define dist amazon
     %define disttag amzn
     %define distver 1
     %define curl libcurl
 %endif
-%if %{_vendor} == redhat
+%if "%{_vendor}" == "redhat"
     # Fedora symlinks /etc/fedora-release to /etc/redhat-release for at least
     # fc3-8.  So RHEL and Fedora look at the same file.  Different versions have
     # different numbers of spaces; hence the use of $3 vs. $4..
@@ -52,7 +52,7 @@
         %define distver %(awk '{print $4}' /etc/redhat-release)
     %endif
     # if macro cannot have an empty test and we're just testing the existance
-    %if %{?fedora:yes}%{!?fedora:no} == yes
+    %if "%{?fedora:yes}%{!?fedora:no}" == "yes"
         # In theory this should be more reliable than awking for distver.
         %define distver %{fedora}
     %endif
@@ -64,7 +64,7 @@
 	%if %{distver} >= 9
 	    %define curl libcurl
 	%endif
-        %if %{_host_cpu} == x86_64 && %{_target_cpu} == i686
+        %if "%{_host_cpu}" == "x86_64" && "%{_target_cpu}" == "i686"
                 # Do nothing if PKG_CONFIG_PATH was set by the user above.
                 %{!?PKG_CONFIG_PATH: %define PKG_CONFIG_PATH /usr/lib/pkgconfig}
         %endif
@@ -148,12 +148,18 @@
         %define curl libcurl
         %define use_libtirpc BuildRequires: libtirpc-devel
     %endif
+    %if %(awk '$1 == "Red" && $6 ~ /10.*/ { exit 1; }' /etc/redhat-release; echo $?)
+        %define dist redhat
+        %define disttag rhel
+        %define distver 10
+        %define curl libcurl
+    %endif
 
     # If dist is undefined, we didn't detect.
     %{!?dist:%define dist unknown}
 %endif
 # Detect Suse variants.
-%if %{_vendor} == "suse"
+%if "%{_vendor}" == "suse"
     %define dist SuSE
     %define disttag %(awk '$1=="openSUSE" { print "suse"; } $1=="SUSE" {$3=="Enterprise" ? TAG="sles" : TAG="suse" ; print TAG}' /etc/SuSE-release)
     # use printf to be sure rpm gets a number type
@@ -168,11 +174,11 @@
 %endif
 
 # Set options per distribution
-%if %{dist} == redhat || %{dist} == fedora
+%if "%{dist}" == "redhat" || "%{dist}" == "fedora"
     %define rpm_group Applications/Archiving
     %define requires_initscripts Requires: initscripts
 %endif
-%if %{dist} == SuSE
+%if "%{dist}" == "SuSE"
     %define rpm_group Productivity/Archiving/Backup
 %endif
 
@@ -429,6 +435,7 @@ find-req-script
         --with-debugging=%{LOGDIR} \
         --with-assertions \
         --disable-installperms \
+        --without-ndmp \
         %{?without_ipv6}
 
 make -s LIBTOOLFLAGS=--silent
